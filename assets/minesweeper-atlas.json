@@ -220,7 +220,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-empty.png",
+					"filename": "cell-empty",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {

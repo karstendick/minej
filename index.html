@@ -35,16 +35,26 @@
 
     }
 
+    function pointerdown(pointer)
+    {
+        console.log("pointerdown event!");
+        this.setFrame('cell-empty')
+    }
+
     function create ()
     {
-        this.add.image(400, 300, 'atlas', 'cells-atlas/cell-raised.png');
-
+        var cell0 = this.add.image(0, 0, 'atlas', 'cells-atlas/cell-raised.png').setOrigin(0);
+        var cell1 = this.add.image(16, 0, 'atlas', 'cells-atlas/cell-raised.png').setOrigin(0);
+        cell0.setInteractive();
+        cell0.on('pointerdown', pointerdown)
     }
 
     function update ()
     {
         
     }
+
+
     </script>
 
 </body>
