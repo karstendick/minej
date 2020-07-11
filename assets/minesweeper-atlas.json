@@ -10,7 +10,7 @@
 			"scale": 1,
 			"frames": [
 				{
-					"filename": "cellnumbers-atlas/cell1.png",
+					"filename": "cell1",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -31,7 +31,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell2.png",
+					"filename": "cell2",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -52,7 +52,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell3.png",
+					"filename": "cell3",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -73,7 +73,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell4.png",
+					"filename": "cell4",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -94,7 +94,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell5.png",
+					"filename": "cell5",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -115,7 +115,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell6.png",
+					"filename": "cell6",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -136,7 +136,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell7.png",
+					"filename": "cell7",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -157,7 +157,7 @@
 					}
 				},
 				{
-					"filename": "cellnumbers-atlas/cell8.png",
+					"filename": "cell8",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -178,7 +178,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-bomb.png",
+					"filename": "cell-bomb",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -199,7 +199,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-detonated-bomb.png",
+					"filename": "cell-detonated-bomb",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -241,7 +241,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-flagged.png",
+					"filename": "cell-flagged",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -262,7 +262,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-mislabelled-bomb.png",
+					"filename": "cell-mislabelled-bomb",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -283,7 +283,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-question-depressed.png",
+					"filename": "cell-question-depressed",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -304,7 +304,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-question-raised.png",
+					"filename": "cell-question-raised",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -325,7 +325,7 @@
 					}
 				},
 				{
-					"filename": "cells-atlas/cell-raised.png",
+					"filename": "cell-raised",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -346,7 +346,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer-empty.png",
+					"filename": "timer-empty",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -367,7 +367,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer-hyphen.png",
+					"filename": "timer-hyphen",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -388,7 +388,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer0.png",
+					"filename": "timer0",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -409,7 +409,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer1.png",
+					"filename": "timer1",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -430,7 +430,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer2.png",
+					"filename": "timer2",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -451,7 +451,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer3.png",
+					"filename": "timer3",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -472,7 +472,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer4.png",
+					"filename": "timer4",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -493,7 +493,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer5.png",
+					"filename": "timer5",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -514,7 +514,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer6.png",
+					"filename": "timer6",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -535,7 +535,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer7.png",
+					"filename": "timer7",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -556,7 +556,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer8.png",
+					"filename": "timer8",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -577,7 +577,7 @@
 					}
 				},
 				{
-					"filename": "timer-atlas/timer9.png",
+					"filename": "timer9",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -598,7 +598,7 @@
 					}
 				},
 				{
-					"filename": "smiles-atlas/smile-dead.png",
+					"filename": "smile-dead",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -619,7 +619,7 @@
 					}
 				},
 				{
-					"filename": "smiles-atlas/smile-depressed.png",
+					"filename": "smile-depressed",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -640,7 +640,7 @@
 					}
 				},
 				{
-					"filename": "smiles-atlas/smile-open-mouth.png",
+					"filename": "smile-open-mouth",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -661,7 +661,7 @@
 					}
 				},
 				{
-					"filename": "smiles-atlas/smile-raised.png",
+					"filename": "smile-raised",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
@@ -682,7 +682,7 @@
 					}
 				},
 				{
-					"filename": "smiles-atlas/smile-sunglasses.png",
+					"filename": "smile-sunglasses",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
