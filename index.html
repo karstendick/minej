@@ -248,6 +248,8 @@
 
         timerEvent = this.time.addEvent({delay: 1000, callback: timerTick, repeat: 1000}); // TODO: start paused and unpause on first click
 
+        game.events.on('blur', function() { timerEvent.paused = true; });
+        game.events.on('focus', function() { timerEvent.paused = false; });
         // TODO: move this to when the first cell is revealed
         // to ensure that that cell is not a mine
         cellValues = new Array(numRows * numCols);
