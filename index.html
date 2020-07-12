@@ -24,6 +24,9 @@
     };
 
     var game = new Phaser.Game(config);
+    var cells = [];
+    var numRows = 9;
+    var numCols = 9;
 
     function preload ()
     {
@@ -31,22 +34,36 @@
         this.load.atlas('atlas',
                         'karstendick/minej/master/assets/minesweeper-atlas.png',
                         'karstendick/minej/master/assets/minesweeper-atlas.json')
-
-
     }
 
-    function pointerdown(pointer)
+    function cellPointerDown(pointer)
     {
-        console.log("pointerdown event!");
+        console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
         this.setFrame('cell-empty')
     }
 
     function create ()
     {
-        var cell0 = this.add.image(0, 0, 'atlas', 'cell-raised').setOrigin(0);
-        var cell1 = this.add.image(16, 0, 'atlas', 'cell-raised').setOrigin(0);
-        cell0.setInteractive();
-        cell0.on('pointerdown', pointerdown)
+        for(var r = 0; r < numRows; ++r)
+        {
+            cells[r] = [];
+            for(var c = 0; c < numCols; ++c)
+            {
+                var pxx = c * 16;
+                var pxy = r * 16;
+                var cell = this.add.image(pxx, pxy, 'atlas', 'cell-raised').setOrigin(0);
+
+                cell.setData('row', r);
+                cell.setData('col', c);
+                cell.setData('numNeighbors', c+1);
+                cell.setData('isMine', (c === 8));
+
+                cell.setInteractive();
+                cell.on('pointerdown', cellPointerDown);
+
+                cells[r][c] = cell;
+            }
+        }
     }
 
     function update ()
