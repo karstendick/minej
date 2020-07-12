@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser-arcade-physics.min.js"></script>
 </head>
 <body>
 
@@ -27,6 +27,8 @@
     var cells = [];
     var numRows = 9;
     var numCols = 9;
+    var numMines = 10;
+    var cellValues = [];
 
     function preload ()
     {
@@ -38,12 +40,46 @@
 
     function cellPointerDown(pointer)
     {
-        console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        this.setFrame('cell-empty')
+        if (pointer.leftButtonDown())
+        {
+            console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
+            this.setFrame('cell-empty');
+        }
+    }
+
+    function cellPointerOut(pointer)
+    {
+        // console.log("pointerout event at (", this.getData('row'), ", ", this.getData('col'), ")");
+        // this.setFrame('cell-raised');
+    }
+
+    function cellPointerUp(pointer)
+    {
+        if (pointer.leftButtonReleased())
+        {
+            console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
+            this.setFrame('cell-raised');
+            if (this.getData('isMine'))
+            {
+                this.setFrame('cell-detonated-bomb')
+            } else if (this.getData('numNeighbors') == 0)
+            {
+                this.setFrame('cell-empty')
+            } else
+            {
+                this.setFrame('cell' + this.getData('numNeighbors'))
+            }
+        }
     }
 
     function create ()
     {
+        cellValues = new Array(numRows * numCols);
+        cellValues.fill(false);
+        cellValues.fill(true, 0, numMines);
+        Phaser.Utils.Array.Shuffle(cellValues);
+        console.log("cellValues: ", cellValues)
+
         for(var r = 0; r < numRows; ++r)
         {
             cells[r] = [];
@@ -56,10 +92,12 @@
                 cell.setData('row', r);
                 cell.setData('col', c);
                 cell.setData('numNeighbors', c+1);
-                cell.setData('isMine', (c === 8));
+                cell.setData('isMine', cellValues[r * numRows + c]);
 
                 cell.setInteractive();
                 cell.on('pointerdown', cellPointerDown);
+                cell.on('pointerout', cellPointerOut);
+                cell.on('pointerup', cellPointerUp);
 
                 cells[r][c] = cell;
             }
