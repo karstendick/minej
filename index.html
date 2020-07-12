@@ -42,6 +42,8 @@
     {
         if (pointer.leftButtonDown())
         {
+            if (this.getData("isFlagged"))
+                return;
             console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
             this.setFrame('cell-empty');
         }
@@ -57,17 +59,36 @@
     {
         if (pointer.leftButtonReleased())
         {
+            if (this.getData("isRevealed"))
+                return;
+            if (this.getData("isFlagged"))
+                return; // TODO: What if there's an incorrectly flagged cell?
+            this.setData("isRevealed", true);
+            this.removeInteractive();
             console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
-            this.setFrame('cell-raised');
             if (this.getData('isMine'))
             {
                 this.setFrame('cell-detonated-bomb')
+                // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
             } else if (this.getData('numNeighbors') == 0)
             {
                 this.setFrame('cell-empty')
+                // TODO: Reveal all neighboring cells
             } else
             {
                 this.setFrame('cell' + this.getData('numNeighbors'))
+            }
+            // TODO: Check to see if you won
+        } else if (pointer.rightButtonReleased())
+        {
+            if(this.getData("isFlagged"))
+            {
+                this.setFrame('cell-raised')
+                this.setData("isFlagged", false)
+            } else
+            {
+                this.setFrame('cell-flagged')
+                this.setData("isFlagged", true)
             }
         }
     }
@@ -101,11 +122,12 @@
 
     function create ()
     {
+        this.input.mouse.disableContextMenu();
+
         cellValues = new Array(numRows * numCols);
         cellValues.fill(false);
         cellValues.fill(true, 0, numMines);
         Phaser.Utils.Array.Shuffle(cellValues);
-        console.log("cellValues: ", cellValues)
 
         for(var r = 0; r < numRows; ++r)
         {
@@ -118,8 +140,9 @@
 
                 cell.setData('row', r);
                 cell.setData('col', c);
-                // cell.setData('numNeighbors', c+1);
                 cell.setData('isMine', cellValues[r * numRows + c]);
+                cell.setData('isFlagged', false);
+                cell.setData('isRevealed', false);
 
                 cell.setInteractive();
                 cell.on('pointerdown', cellPointerDown);
