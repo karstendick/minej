@@ -53,18 +53,58 @@
                 return;
             console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
             this.setFrame('cell-empty');
+            this.setData("isDepressed", true)
         }
+    }
+
+    function getDepressedCells()
+    {
+        var depressedCells = [];
+        for(var r = 0; r < numRows; ++r)
+        {
+            for(var c = 0; c < numCols; ++c)
+            {
+                var cell = cells[r][c]
+                if (cell.getData("isDepressed") && !cell.getData("isRevealed"))
+                    depressedCells.push(cell);
+            }
+        }
+        return depressedCells;
     }
 
     function cellPointerOut(pointer)
     {
-        // console.log("pointerout event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        // this.setFrame('cell-raised');
+        console.log("pointerout event at (", this.getData('row'), ", ", this.getData('col'), ")");
+        depressedCells = getDepressedCells();
+        for (const cell of depressedCells)
+        {
+            cell.setFrame('cell-raised')
+            cell.setData("isDepressed", false)
+        }
+    }
+
+    function cellPointerOver(pointer)
+    {
+        console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
+        if (pointer.leftButtonDown() && !pointer.rightButtonDown())
+        {
+            if (!this.getData("isRevealed") && !this.getData("isFlagged"))
+            {
+                console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
+                this.setData("isDepressed", true);
+                this.setFrame('cell-empty');
+            }
+        }
     }
 
     function cellPointerUp(pointer)
     {
-        if (pointer.leftButtonReleased())
+        if ((pointer.leftButtonReleased() && pointer.rightButtonDown())
+            || (pointer.leftButtonDown() && pointer.rightButtonReleased()))
+        {
+            // chording
+            ;
+        } else if (pointer.leftButtonReleased())
         {
             if (this.getData("isRevealed"))
                 return;
@@ -123,7 +163,7 @@
     function revealCell(cell)
     {
         cell.setData("isRevealed", true);
-        cell.removeInteractive();
+        // cell.removeInteractive(); // This makes chording impossible.
         numNeighbors = cell.getData("numNeighbors");
         if (numNeighbors == 0)
             cell.setFrame('cell-empty');
@@ -229,11 +269,13 @@
                 cell.setData('isMine', cellValues[r * numRows + c]);
                 cell.setData('isFlagged', false);
                 cell.setData('isRevealed', false);
+                cell.setData('isDepressed', false);
 
                 cell.setInteractive();
                 cell.on('pointerdown', cellPointerDown);
                 cell.on('pointerout', cellPointerOut);
                 cell.on('pointerup', cellPointerUp);
+                cell.on('pointerover', cellPointerOver);
 
                 cells[r][c] = cell;
             }
