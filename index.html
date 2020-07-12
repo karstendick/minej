@@ -25,7 +25,6 @@
     var cellValues = [];
     var numFlags = 0;
     var gameLost = false;
-    var gameWon = false;
 
     var smiley;
     var mineSign;
@@ -79,7 +78,7 @@
         {
             for(var c = 0; c < numCols; ++c)
             {
-                var cell = cells[r][c]
+                var cell = cells[r][c];
                 if (cell.getData("isDepressed") && !cell.getData("isRevealed"))
                     depressedCells.push(cell);
             }
@@ -124,6 +123,45 @@
         }
     }
 
+    function isGameWon()
+    {
+        if (gameLost)
+            return false;
+        for(var r = 0; r < numRows; ++r)
+        {
+            for(var c = 0; c < numCols; ++c)
+            {
+                var cell = cells[r][c];
+                if (!cell.getData("isMine") && !cell.getData("isRevealed"))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    function updateGameWon()
+    {
+        smiley.setFrame('smile-sunglasses');
+        updateGameEnd();
+    }
+    function updateGameLost()
+    {
+        smiley.setFrame('smile-dead');
+        updateGameEnd();
+    }
+    function updateGameEnd()
+    {
+        timerEvent.remove();
+        for(var r = 0; r < numRows; ++r)
+        {
+            for(var c = 0; c < numCols; ++c)
+            {
+                var cell = cells[r][c];
+                cell.disableInteractive();
+            }
+        }
+    }
+
     function cellPointerUp(pointer)
     {
         if ((pointer.leftButtonReleased() && pointer.rightButtonDown())
@@ -141,28 +179,27 @@
 
             revealNeighbors(this);
 
+            if(isGameWon())
+                updateGameWon();
+            else if (gameLost)
+                updateGameLost();
         } else if (pointer.leftButtonReleased())
         {
             if (this.getData("isRevealed") || this.getData("isFlagged"))
                 return;
 
             console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
-            if (this.getData('isMine'))
+            revealCell(this);
+            if (this.getData('numNeighbors') == 0 && !gameLost)
             {
-                this.setData("isRevealed", true);
-                this.setFrame('cell-detonated-bomb');
-                gameLost = true;
-                // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
-            } else if (this.getData('numNeighbors') == 0)
-            {
-                revealCell(this);
                 revealNeighbors(this);
-            } else
-            {
-                this.setData("isRevealed", true);
-                this.setFrame('cell' + this.getData('numNeighbors'));
             }
             // TODO: Check to see if you won/lost
+            // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
+            if(isGameWon())
+                updateGameWon();
+            else if (gameLost)
+                updateGameLost();
         } else if (pointer.rightButtonReleased())
         {
             if(this.getData("isRevealed"))
@@ -202,9 +239,9 @@
         cell.setData("isRevealed", true);
         if (cell.getData('isMine'))
         {
-            cell.setData("isRevealed", true);
             cell.setFrame('cell-detonated-bomb');
             gameLost = true;
+            return;
         }
         numNeighbors = cell.getData("numNeighbors");
         if (numNeighbors == 0)
