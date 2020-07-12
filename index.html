@@ -72,6 +72,33 @@
         }
     }
 
+    function getCell(row, col)
+    {
+        if ((0 <= row) && (row < numRows) && (0 <= col) && (col < numCols))
+        {
+            return cells[row][col];
+        }
+        return undefined;
+    }
+
+    function getNeighbors(row, col)
+    {
+        neighbors = [
+            getCell(row-1, col),
+            getCell(row-1, col+1),
+            getCell(row, col+1),
+            getCell(row+1, col+1),
+            getCell(row+1, col),
+            getCell(row+1, col-1),
+            getCell(row, col-1),
+            getCell(row-1, col-1)
+        ];
+        neighbors = neighbors.filter(function(neighbor) {
+            return neighbor !== undefined;
+        });
+        return neighbors;
+    }
+
     function create ()
     {
         cellValues = new Array(numRows * numCols);
@@ -91,7 +118,7 @@
 
                 cell.setData('row', r);
                 cell.setData('col', c);
-                cell.setData('numNeighbors', c+1);
+                // cell.setData('numNeighbors', c+1);
                 cell.setData('isMine', cellValues[r * numRows + c]);
 
                 cell.setInteractive();
@@ -100,6 +127,17 @@
                 cell.on('pointerup', cellPointerUp);
 
                 cells[r][c] = cell;
+            }
+        }
+        for(var r = 0; r < numRows; ++r)
+        {
+            for(var c = 0; c < numCols; ++c)
+            {
+                neighbors = getNeighbors(r,c);
+                numNeighbors = neighbors.filter(function(neighbor) {
+                    return neighbor.getData('isMine');
+                }).length;
+                cells[r][c].setData('numNeighbors', numNeighbors);
             }
         }
     }
