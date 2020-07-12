@@ -63,20 +63,22 @@
                 return;
             if (this.getData("isFlagged"))
                 return; // TODO: What if there's an incorrectly flagged cell?
-            this.setData("isRevealed", true);
+
             this.removeInteractive();
             console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
             if (this.getData('isMine'))
             {
+                this.setData("isRevealed", true);
                 this.setFrame('cell-detonated-bomb')
                 // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
             } else if (this.getData('numNeighbors') == 0)
             {
-                this.setFrame('cell-empty')
-                // TODO: Reveal all neighboring cells
+                revealCell(this);
+                revealNeighbors(this);
             } else
             {
-                this.setFrame('cell' + this.getData('numNeighbors'))
+                this.setData("isRevealed", true);
+                this.setFrame('cell' + this.getData('numNeighbors'));
             }
             // TODO: Check to see if you won
         } else if (pointer.rightButtonReleased())
@@ -90,6 +92,35 @@
                 this.setFrame('cell-flagged')
                 this.setData("isFlagged", true)
             }
+        }
+    }
+
+    function revealCell(cell)
+    {
+        cell.setData("isRevealed", true);
+        cell.removeInteractive();
+        numNeighbors = cell.getData("numNeighbors");
+        if (numNeighbors == 0)
+            cell.setFrame('cell-empty');
+        else
+            cell.setFrame('cell' + cell.getData('numNeighbors'));
+    }
+
+    function revealNeighbors(cell)
+    {
+        revealCell(cell);
+        var neighbors = getNeighbors(cell.getData("row"), cell.getData("col"));
+        neighbors = neighbors.filter(function(neighbor) {
+            return !neighbor.getData("isRevealed");
+        });
+        for (var i = 0; i < neighbors.length; ++i)
+        {
+            revealCell(neighbors[i]);
+        }
+        for (var i = 0; i < neighbors.length; ++i)
+        {
+            if ((neighbors[i].getData("numNeighbors") == 0))
+                revealNeighbors(neighbors[i]);
         }
     }
 
