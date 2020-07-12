@@ -24,6 +24,8 @@
     var numMines = 10;
     var cellValues = [];
     var numFlags = 0;
+    var gameLost = false;
+    var gameWon = false;
 
     var smiley;
     var mineSign;
@@ -47,9 +49,22 @@
 
     function cellPointerDown(pointer)
     {
-        if (pointer.leftButtonDown())
+        if (pointer.leftButtonDown() && pointer.rightButtonDown())
         {
-            if (this.getData("isFlagged"))
+            var neighbors = getNeighbors(this);
+            neighbors.push(this);
+            for (let cell of neighbors)
+            {
+                if (!cell.getData("isRevealed") && !cell.getData("isFlagged"))
+                {
+                    cell.setFrame('cell-empty');
+                    cell.setData("isDepressed", true);
+                }
+            }
+
+        } else if (pointer.leftButtonDown())
+        {
+            if (this.getData("isFlagged") || this.getData("isRevealed"))
                 return;
             console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
             this.setFrame('cell-empty');
@@ -94,6 +109,18 @@
                 this.setData("isDepressed", true);
                 this.setFrame('cell-empty');
             }
+        } else if (pointer.leftButtonDown() && pointer.rightButtonDown())
+        {
+            var neighbors = getNeighbors(this);
+            neighbors.push(this);
+            for (let cell of neighbors)
+            {
+                if (!cell.getData("isRevealed") && !cell.getData("isFlagged"))
+                {
+                    cell.setFrame('cell-empty');
+                    cell.setData("isDepressed", true);
+                }
+            }
         }
     }
 
@@ -102,21 +129,29 @@
         if ((pointer.leftButtonReleased() && pointer.rightButtonDown())
             || (pointer.leftButtonDown() && pointer.rightButtonReleased()))
         {
+            if (this.getData("isFlagged") || !this.getData("isRevealed"))
+                return;
             // chording
-            ;
+            var neighbors = getNeighbors(this);
+            var numFlaggedNeighbors = neighbors.filter(function(neighbor) {
+                    return neighbor.getData('isFlagged');
+            }).length;
+            if (this.getData("numNeighbors") !== numFlaggedNeighbors)
+                return;
+
+            revealNeighbors(this);
+
         } else if (pointer.leftButtonReleased())
         {
-            if (this.getData("isRevealed"))
+            if (this.getData("isRevealed") || this.getData("isFlagged"))
                 return;
-            if (this.getData("isFlagged"))
-                return; // TODO: What if there's an incorrectly flagged cell?
 
-            this.removeInteractive();
             console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
             if (this.getData('isMine'))
             {
                 this.setData("isRevealed", true);
-                this.setFrame('cell-detonated-bomb')
+                this.setFrame('cell-detonated-bomb');
+                gameLost = true;
                 // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
             } else if (this.getData('numNeighbors') == 0)
             {
@@ -127,9 +162,11 @@
                 this.setData("isRevealed", true);
                 this.setFrame('cell' + this.getData('numNeighbors'));
             }
-            // TODO: Check to see if you won
+            // TODO: Check to see if you won/lost
         } else if (pointer.rightButtonReleased())
         {
+            if(this.getData("isRevealed"))
+                return;
             if(this.getData("isFlagged"))
             {
                 this.setFrame('cell-raised')
@@ -163,7 +200,12 @@
     function revealCell(cell)
     {
         cell.setData("isRevealed", true);
-        // cell.removeInteractive(); // This makes chording impossible.
+        if (cell.getData('isMine'))
+        {
+            cell.setData("isRevealed", true);
+            cell.setFrame('cell-detonated-bomb');
+            gameLost = true;
+        }
         numNeighbors = cell.getData("numNeighbors");
         if (numNeighbors == 0)
             cell.setFrame('cell-empty');
@@ -174,9 +216,9 @@
     function revealNeighbors(cell)
     {
         revealCell(cell);
-        var neighbors = getNeighbors(cell.getData("row"), cell.getData("col"));
+        var neighbors = getNeighbors(cell);
         neighbors = neighbors.filter(function(neighbor) {
-            return !neighbor.getData("isRevealed");
+            return !neighbor.getData("isRevealed") && !neighbor.getData("isFlagged");
         });
         for (var i = 0; i < neighbors.length; ++i)
         {
@@ -198,8 +240,10 @@
         return undefined;
     }
 
-    function getNeighbors(row, col)
+    function getNeighbors(cell)
     {
+        var row = cell.getData("row");
+        var col = cell.getData("col");
         neighbors = [
             getCell(row-1, col),
             getCell(row-1, col+1),
@@ -286,7 +330,7 @@
         {
             for(var c = 0; c < numCols; ++c)
             {
-                neighbors = getNeighbors(r,c);
+                neighbors = getNeighbors(cells[r][c]);
                 numNeighbors = neighbors.filter(function(neighbor) {
                     return neighbor.getData('isMine');
                 }).length;
