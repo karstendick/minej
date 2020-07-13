@@ -148,6 +148,17 @@
     {
         smiley.setFrame('smile-dead');
         updateGameEnd();
+        for(var r = 0; r < numRows; ++r)
+        {
+            for(var c = 0; c < numCols; ++c)
+            {
+                var cell = cells[r][c];
+                if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
+                    cell.setFrame('cell-bomb');
+                else if (cell.getData("isFlagged") && !cell.getData("isMine"))
+                    cell.setFrame('cell-mislabelled-bomb');
+            }
+        }
     }
     function updateGameEnd()
     {
@@ -160,6 +171,14 @@
                 cell.disableInteractive();
             }
         }
+    }
+
+    function checkForGameEnd()
+    {
+        if(isGameWon())
+            updateGameWon();
+        else if (gameLost)
+            updateGameLost();
     }
 
     function cellPointerUp(pointer)
@@ -179,10 +198,7 @@
 
             revealNeighbors(this);
 
-            if(isGameWon())
-                updateGameWon();
-            else if (gameLost)
-                updateGameLost();
+            checkForGameEnd();
         } else if (pointer.leftButtonReleased())
         {
             if (this.getData("isRevealed") || this.getData("isFlagged"))
@@ -194,12 +210,7 @@
             {
                 revealNeighbors(this);
             }
-            // TODO: Check to see if you won/lost
-            // TODO: game over! Reveal board, stop timer, deactivate all cells, etc.
-            if(isGameWon())
-                updateGameWon();
-            else if (gameLost)
-                updateGameLost();
+            checkForGameEnd();
         } else if (pointer.rightButtonReleased())
         {
             if(this.getData("isRevealed"))
@@ -367,11 +378,12 @@
         {
             for(var c = 0; c < numCols; ++c)
             {
-                neighbors = getNeighbors(cells[r][c]);
+                var cell = cells[r][c]
+                neighbors = getNeighbors(cell);
                 numNeighbors = neighbors.filter(function(neighbor) {
                     return neighbor.getData('isMine');
                 }).length;
-                cells[r][c].setData('numNeighbors', numNeighbors);
+                cell.setData('numNeighbors', numNeighbors);
             }
         }
     }
