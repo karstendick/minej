@@ -74,15 +74,10 @@
     function getDepressedCells()
     {
         var depressedCells = [];
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var cell = cells[r][c];
-                if (cell.getData("isDepressed") && !cell.getData("isRevealed"))
-                    depressedCells.push(cell);
-            }
-        }
+        mapOverCells(function(cell) {
+            if (cell.getData("isDepressed") && !cell.getData("isRevealed"))
+                depressedCells.push(cell);
+        });
         return depressedCells;
     }
 
@@ -127,6 +122,7 @@
     {
         if (gameLost)
             return false;
+
         for(var r = 0; r < numRows; ++r)
         {
             for(var c = 0; c < numCols; ++c)
@@ -148,29 +144,19 @@
     {
         smiley.setFrame('smile-dead');
         updateGameEnd();
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var cell = cells[r][c];
-                if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
-                    cell.setFrame('cell-bomb');
-                else if (cell.getData("isFlagged") && !cell.getData("isMine"))
-                    cell.setFrame('cell-mislabelled-bomb');
-            }
-        }
+        mapOverCells(function(cell){
+            if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
+                cell.setFrame('cell-bomb');
+            else if (cell.getData("isFlagged") && !cell.getData("isMine"))
+                cell.setFrame('cell-mislabelled-bomb');
+        });
     }
     function updateGameEnd()
     {
         timerEvent.remove();
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var cell = cells[r][c];
-                cell.disableInteractive();
-            }
-        }
+        mapOverCells(function(cell){
+            cell.disableInteractive();
+        });
     }
 
     function checkForGameEnd()
@@ -374,16 +360,24 @@
                 cells[r][c] = cell;
             }
         }
+
+        mapOverCells(function(cell) {
+            neighbors = getNeighbors(cell);
+            numNeighbors = neighbors.filter(function(neighbor) {
+                return neighbor.getData('isMine');
+            }).length;
+            cell.setData('numNeighbors', numNeighbors);
+        });
+    }
+
+    function mapOverCells(f)
+    {
         for(var r = 0; r < numRows; ++r)
         {
             for(var c = 0; c < numCols; ++c)
             {
-                var cell = cells[r][c]
-                neighbors = getNeighbors(cell);
-                numNeighbors = neighbors.filter(function(neighbor) {
-                    return neighbor.getData('isMine');
-                }).length;
-                cell.setData('numNeighbors', numNeighbors);
+                var cell = cells[r][c];
+                f(cell);
             }
         }
     }
