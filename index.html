@@ -298,12 +298,38 @@
         timerOnes.setFrame('timer' + displaySeconds[2]);
     }
 
+    function smileyPointerDown(pointer)
+    {
+        smiley.setFrame('smile-depressed');
+        smiley.setData("isDepressed", true);
+    }
+    function smileyPointerOut(pointer)
+    {
+        if (smiley.getData("isDepressed"))
+        {
+            smiley.setData("isDepressed", false);
+            smiley.setFrame('smile-raised');
+        }
+    }
+    function smileyPointerUp(pointer)
+    {
+        if (pointer.leftButtonReleased())
+        {
+            // TODO: reset the game: reset cells, mine display, timer event and display
+            smiley.setData("isDepressed", false);
+            smiley.setFrame('smile-raised');
+        }
+    }
+
     function create ()
     {
         this.input.mouse.disableContextMenu();
 
         smiley = this.add.image(gridTopLeftX + (numCols * 16)/2 - 12, gridTopLeftY - 37, 'atlas', 'smile-raised').setOrigin(0);
         smiley.setInteractive();
+        smiley.on('pointerdown', smileyPointerDown);
+        smiley.on('pointerout', smileyPointerOut);
+        smiley.on('pointerup', smileyPointerUp);
 
         mineSign = this.add.image(gridTopLeftX, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
         mineTens = this.add.image(gridTopLeftX + 13, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
@@ -315,9 +341,9 @@
         timerOnes = this.add.image(gridTopLeftX + (numCols * 16) - 13, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
 
         timerEvent = this.time.addEvent({delay: 1000, callback: timerTick, repeat: 1000}); // TODO: start paused and unpause on first click
-
         game.events.on('blur', function() { timerEvent.paused = true; });
         game.events.on('focus', function() { timerEvent.paused = false; });
+
         // TODO: move this to when the first cell is revealed
         // to ensure that that cell is not a mine
         cellValues = new Array(numRows * numCols);
