@@ -54,26 +54,19 @@
             neighbors.push(this);
             for (let cell of neighbors)
             {
-                if (!cell.getData("isRevealed") && !cell.getData("isFlagged"))
-                {
-                    cell.setFrame('cell-empty');
-                    cell.setData("isDepressed", true);
-                }
+                depressCell(cell);
             }
 
         } else if (pointer.leftButtonDown())
         {
-            if (this.getData("isFlagged") || this.getData("isRevealed"))
-                return;
+            depressCell(this);
             console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
-            this.setFrame('cell-empty');
-            this.setData("isDepressed", true)
         }
     }
-    // TODO: wire this up to DRY up cellPointerDown
+
     function depressCell(cell)
     {
-        if (cell.getData("isFlagged") || this.getData("isRevealed"))
+        if (cell.getData("isFlagged") || cell.getData("isRevealed"))
             return;
         cell.setFrame('cell-empty');
         cell.setData("isDepressed", true);
@@ -103,25 +96,16 @@
     function cellPointerOver(pointer)
     {
         console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        if (pointer.leftButtonDown() && !pointer.rightButtonDown()
-            && !this.getData("isRevealed") && !this.getData("isFlagged"))
+        if (pointer.leftButtonDown() && !pointer.rightButtonDown())
         {
-            console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
-            // TODO: use depressCell() here
-            this.setData("isDepressed", true);
-            this.setFrame('cell-empty');
+            depressCell(this);
         } else if (pointer.leftButtonDown() && pointer.rightButtonDown())
         {
             var neighbors = getNeighbors(this);
             neighbors.push(this);
             for (let cell of neighbors)
             {
-                // TODO: use depressCell() here
-                if (!cell.getData("isRevealed") && !cell.getData("isFlagged"))
-                {
-                    cell.setFrame('cell-empty');
-                    cell.setData("isDepressed", true);
-                }
+                depressCell(cell);
             }
         }
     }
