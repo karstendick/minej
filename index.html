@@ -70,6 +70,14 @@
             this.setData("isDepressed", true)
         }
     }
+    // TODO: wire this up to DRY up cellPointerDown
+    function depressCell(cell)
+    {
+        if (cell.getData("isFlagged") || this.getData("isRevealed"))
+            return;
+        cell.setFrame('cell-empty');
+        cell.setData("isDepressed", true);
+    }
 
     function getDepressedCells()
     {
@@ -85,7 +93,7 @@
     {
         console.log("pointerout event at (", this.getData('row'), ", ", this.getData('col'), ")");
         depressedCells = getDepressedCells();
-        for (const cell of depressedCells)
+        for (let cell of depressedCells)
         {
             cell.setFrame('cell-raised')
             cell.setData("isDepressed", false)
@@ -95,20 +103,20 @@
     function cellPointerOver(pointer)
     {
         console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        if (pointer.leftButtonDown() && !pointer.rightButtonDown())
+        if (pointer.leftButtonDown() && !pointer.rightButtonDown()
+            && !this.getData("isRevealed") && !this.getData("isFlagged"))
         {
-            if (!this.getData("isRevealed") && !this.getData("isFlagged"))
-            {
-                console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
-                this.setData("isDepressed", true);
-                this.setFrame('cell-empty');
-            }
+            console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
+            // TODO: use depressCell() here
+            this.setData("isDepressed", true);
+            this.setFrame('cell-empty');
         } else if (pointer.leftButtonDown() && pointer.rightButtonDown())
         {
             var neighbors = getNeighbors(this);
             neighbors.push(this);
             for (let cell of neighbors)
             {
+                // TODO: use depressCell() here
                 if (!cell.getData("isRevealed") && !cell.getData("isFlagged"))
                 {
                     cell.setFrame('cell-empty');
@@ -147,7 +155,7 @@
         mapOverCells(function(cell){
             if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
                 cell.setFrame('cell-bomb');
-            else if (cell.getData("isFlagged") && !cell.getData("isMine"))
+            else if (!cell.getData("isMine") && cell.getData("isFlagged"))
                 cell.setFrame('cell-mislabelled-bomb');
         });
     }
@@ -223,6 +231,7 @@
             mineSign.setFrame('timer-hyphen');
         else
             mineSign.setFrame('timer0');
+
         displayStr = Math.abs(displayNum).toString();
         if (displayStr.length == 1)
             displayStr = '0' + displayStr;
@@ -257,9 +266,6 @@
         for (var i = 0; i < neighbors.length; ++i)
         {
             revealCell(neighbors[i]);
-        }
-        for (var i = 0; i < neighbors.length; ++i)
-        {
             if ((neighbors[i].getData("numNeighbors") == 0))
                 revealNeighbors(neighbors[i]);
         }
