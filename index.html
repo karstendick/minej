@@ -70,6 +70,7 @@
             return;
         cell.setFrame('cell-empty');
         cell.setData("isDepressed", true);
+        smiley.setFrame('smile-open-mouth');
     }
 
     function getDepressedCells()
@@ -91,6 +92,8 @@
             cell.setFrame('cell-raised')
             cell.setData("isDepressed", false)
         }
+        if (!gameLost && !isGameWon())
+            smiley.setFrame('smile-raised');
     }
 
     function cellPointerOver(pointer)
