@@ -122,7 +122,7 @@
         {
             for(var c = 0; c < numCols; ++c)
             {
-                var cell = cells[r][c];
+                var cell = cells[r * numRows + c];
                 if (!cell.getData("isMine") && !cell.getData("isRevealed"))
                     return false;
             }
@@ -229,6 +229,8 @@
 
     function revealCell(cell)
     {
+        if (!gameLost)
+            smiley.setFrame('smile-raised');
         cell.setData("isRevealed", true);
         if (cell.getData('isMine'))
         {
@@ -262,7 +264,7 @@
     {
         if ((0 <= row) && (row < numRows) && (0 <= col) && (col < numCols))
         {
-            return cells[row][col];
+            return cells[row * numRows + col];
         }
         return undefined;
     }
@@ -354,9 +356,9 @@
         cellValues.fill(true, 0, numMines);
         Phaser.Utils.Array.Shuffle(cellValues);
 
+        cells = new Array(numRows * numCols);
         for(var r = 0; r < numRows; ++r)
         {
-            cells[r] = [];
             for(var c = 0; c < numCols; ++c)
             {
                 var pxx = c * 16 + gridTopLeftX;
@@ -376,7 +378,7 @@
                 cell.on('pointerup', cellPointerUp);
                 cell.on('pointerover', cellPointerOver);
 
-                cells[r][c] = cell;
+                cells[r * numRows + c] = cell;
             }
         }
 
@@ -395,7 +397,7 @@
         {
             for(var c = 0; c < numCols; ++c)
             {
-                var cell = cells[r][c];
+                var cell = cells[r * numRows + c];
                 f(cell);
             }
         }
