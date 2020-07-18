@@ -77,7 +77,7 @@
     {
         var depressedCells = [];
         mapOverCells(function(cell) {
-            if (cell.getData("isDepressed") && !cell.getData("isRevealed"))
+            if (cell.getData("isDepressed") && !cell.getData("isRevealed") && !cell.getData("isFlagged"))
                 depressedCells.push(cell);
         });
         return depressedCells;
