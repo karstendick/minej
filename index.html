@@ -6,407 +6,414 @@
 <body>
 
     <script>
+    'use strict';
+
+    class MyScene extends Phaser.Scene {
+        smiley
+        timerEvent
+        constructor() {
+            super({ key: 'MyScene' });
+
+            this.cells = [];
+            this.numRows = 9;
+            this.numCols = 9;
+            this.numMines = 10;
+            this.cellValues = [];
+            this.numFlags = 0;
+            this.gameLost = false;
+
+            // this.smiley;
+            this.mineSign;
+            this.mineTens;
+            this.mineOnes;
+            this.timerHundreds;
+            this.timerTens;
+            this.timerOnes;
+            this.elapsedSeconds = 0;
+
+            this.gridTopLeftX = 4 + (800/2) - (this.numCols * 16)/2;
+            this.gridTopLeftY = 48;
+        }
+
+        preload()
+        {
+            this.load.setBaseURL('https://raw.githubusercontent.com');
+            this.load.atlas('atlas',
+                            'karstendick/minej/master/assets/minesweeper-atlas.png',
+                            'karstendick/minej/master/assets/minesweeper-atlas.json')
+        }
+
+        cellPointerDown(pointer, thisCell)
+        {
+            if (pointer.leftButtonDown() && pointer.rightButtonDown())
+            {
+                var neighbors = this.getNeighbors(thisCell);
+                neighbors.push(thisCell);
+                for (let cell of neighbors)
+                {
+                    this.depressCell(cell);
+                }
+
+            } else if (pointer.leftButtonDown())
+            {
+                this.depressCell(thisCell);
+                console.log("pointerdown event at (", thisCell.getData('row'), ", ", thisCell.getData('col'), ")");
+            }
+        }
+
+        depressCell(cell)
+        {
+            if (cell.getData("isFlagged") || cell.getData("isRevealed"))
+                return;
+            cell.setFrame('cell-empty');
+            cell.setData("isDepressed", true);
+            this.smiley.setFrame('smile-open-mouth');
+        }
+
+        getDepressedCells()
+        {
+            var depressedCells = [];
+            this.mapOverCells(function(cell) {
+                if (cell.getData("isDepressed") && !cell.getData("isRevealed") && !cell.getData("isFlagged"))
+                    depressedCells.push(cell);
+            });
+            return depressedCells;
+        }
+
+        cellPointerOut(pointer, thisCell)
+        {
+            console.log("pointerout event at (", thisCell.getData('row'), ", ", thisCell.getData('col'), ")");
+            const depressedCells = this.getDepressedCells();
+            for (let cell of depressedCells)
+            {
+                cell.setFrame('cell-raised')
+                cell.setData("isDepressed", false)
+            }
+            if (!this.gameLost && !this.isGameWon())
+                this.smiley.setFrame('smile-raised');
+        }
+
+        cellPointerOver(pointer, thisCell)
+        {
+            console.log("pointerover event at (", thisCell.getData('row'), ", ", thisCell.getData('col'), ")");
+            if (pointer.leftButtonDown() && !pointer.rightButtonDown())
+            {
+                this.depressCell(thisCell);
+            } else if (pointer.leftButtonDown() && pointer.rightButtonDown())
+            {
+                var neighbors = this.getNeighbors(thisCell);
+                neighbors.push(thisCell);
+                for (let cell of neighbors)
+                {
+                    this.depressCell(cell);
+                }
+            }
+        }
+
+        isGameWon()
+        {
+            if (this.gameLost)
+                return false;
+
+            for(var r = 0; r < this.numRows; ++r)
+            {
+                for(var c = 0; c < this.numCols; ++c)
+                {
+                    var cell = this.cells[r * this.numRows + c];
+                    if (!cell.getData("isMine") && !cell.getData("isRevealed"))
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        updateGameWon()
+        {
+            this.mapOverCells(function(cell){
+                if (cell.getData("isMine"))
+                    cell.setFrame('cell-flagged')
+            });
+            this.smiley.setFrame('smile-sunglasses');
+            this.updateGameEnd();
+        }
+        updateGameLost()
+        {
+            this.smiley.setFrame('smile-dead');
+            this.updateGameEnd();
+            this.mapOverCells(function(cell){
+                if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
+                    cell.setFrame('cell-bomb');
+                else if (!cell.getData("isMine") && cell.getData("isFlagged"))
+                    cell.setFrame('cell-mislabelled-bomb');
+            });
+        }
+        updateGameEnd()
+        {
+            this.timerEvent.remove();
+            this.mapOverCells(function(cell){
+                cell.disableInteractive();
+            });
+        }
+
+        checkForGameEnd()
+        {
+            if(this.isGameWon())
+                this.updateGameWon();
+            else if (this.gameLost)
+                this.updateGameLost();
+        }
+
+        cellPointerUp(pointer, thisCell)
+        {
+            if ((pointer.leftButtonReleased() && pointer.rightButtonDown())
+                || (pointer.leftButtonDown() && pointer.rightButtonReleased()))
+            {
+                if (thisCell.getData("isFlagged") || !thisCell.getData("isRevealed"))
+                    return;
+                // chording
+                var neighbors = this.getNeighbors(thisCell);
+                var numFlaggedNeighbors = neighbors.filter(function(neighbor) {
+                        return neighbor.getData('isFlagged');
+                }).length;
+                if (thisCell.getData("numNeighbors") !== numFlaggedNeighbors)
+                    return;
+
+                this.revealNeighbors(thisCell);
+
+                this.checkForGameEnd();
+            } else if (pointer.leftButtonReleased())
+            {
+                if (thisCell.getData("isRevealed") || thisCell.getData("isFlagged"))
+                    return;
+
+                console.log("pointerup event at (", thisCell.getData('row'), ", ", thisCell.getData('col'), ")");
+                this.revealCell(thisCell);
+                if (thisCell.getData('numNeighbors') == 0 && !this.gameLost)
+                {
+                    this.revealNeighbors(thisCell);
+                }
+                this.checkForGameEnd();
+            } else if (pointer.rightButtonReleased())
+            {
+                if(thisCell.getData("isRevealed"))
+                    return;
+                if(thisCell.getData("isFlagged"))
+                {
+                    thisCell.setFrame('cell-raised')
+                    thisCell.setData("isFlagged", false)
+                    this.numFlags--;
+                } else
+                {
+                    thisCell.setFrame('cell-flagged')
+                    thisCell.setData("isFlagged", true)
+                    this.numFlags++;
+                }
+                this.updateFlagDisplay(this.numFlags);
+            }
+        }
+
+        updateFlagDisplay(numFlags)
+        {
+            const displayNum = Phaser.Math.Clamp(this.numMines - numFlags, -99, 99);
+            if (displayNum < 0)
+                this.mineSign.setFrame('timer-hyphen');
+            else
+                this.mineSign.setFrame('timer0');
+
+            let displayStr = Math.abs(displayNum).toString();
+            if (displayStr.length == 1)
+                displayStr = '0' + displayStr;
+
+            this.mineTens.setFrame('timer' + displayStr[0]);
+            this.mineOnes.setFrame('timer' + displayStr[1]);
+        }
+
+        revealCell(cell)
+        {
+            if (!this.gameLost)
+                this.smiley.setFrame('smile-raised');
+            cell.setData("isRevealed", true);
+            if (cell.getData('isMine'))
+            {
+                cell.setFrame('cell-detonated-bomb');
+                this.gameLost = true;
+                return;
+            }
+            const numNeighbors = cell.getData("numNeighbors");
+            if (numNeighbors == 0)
+                cell.setFrame('cell-empty');
+            else
+                cell.setFrame('cell' + cell.getData('numNeighbors'));
+        }
+
+        revealNeighbors(cell)
+        {
+            this.revealCell(cell);
+            var neighbors = this.getNeighbors(cell);
+            neighbors = neighbors.filter(function(neighbor) {
+                return !neighbor.getData("isRevealed") && !neighbor.getData("isFlagged");
+            });
+            for (var i = 0; i < neighbors.length; ++i)
+            {
+                this.revealCell(neighbors[i]);
+                if ((neighbors[i].getData("numNeighbors") == 0))
+                this.revealNeighbors(neighbors[i]);
+            }
+        }
+
+        getCell(row, col)
+        {
+            if ((0 <= row) && (row < this.numRows) && (0 <= col) && (col < this.numCols))
+            {
+                return this.cells[row * this.numRows + col];
+            }
+            return undefined;
+        }
+
+        getNeighbors(cell)
+        {
+            const row = cell.getData("row");
+            const col = cell.getData("col");
+            let neighbors = [
+                this.getCell(row-1, col),
+                this.getCell(row-1, col+1),
+                this.getCell(row, col+1),
+                this.getCell(row+1, col+1),
+                this.getCell(row+1, col),
+                this.getCell(row+1, col-1),
+                this.getCell(row, col-1),
+                this.getCell(row-1, col-1)
+            ];
+            neighbors = neighbors.filter(function(neighbor) {
+                return neighbor !== undefined;
+            });
+            return neighbors;
+        }
+
+        timerTick()
+        {
+            this.elapsedSeconds = Phaser.Math.Clamp(this.elapsedSeconds + 1, 0, 999);
+            let displaySeconds = this.elapsedSeconds.toString();
+            if (displaySeconds.length == 1)
+                displaySeconds = '00' + displaySeconds;
+            else if (displaySeconds.length == 2)
+                displaySeconds = '0' + displaySeconds;
+
+            this.timerHundreds.setFrame('timer' + displaySeconds[0]);
+            this.timerTens.setFrame('timer' + displaySeconds[1]);
+            this.timerOnes.setFrame('timer' + displaySeconds[2]);
+        }
+
+        smileyPointerDown(pointer)
+        {
+            this.smiley.setFrame('smile-depressed');
+            this.smiley.setData("isDepressed", true);
+        }
+        smileyPointerOut(pointer)
+        {
+            if (this.smiley.getData("isDepressed"))
+            {
+                this.smiley.setData("isDepressed", false);
+                this.smiley.setFrame('smile-raised');
+            }
+        }
+        smileyPointerUp(pointer)
+        {
+            if (pointer.leftButtonReleased())
+            {
+                // TODO: reset the game: reset this.cells, mine display, timer event and display
+                this.smiley.setData("isDepressed", false);
+                this.smiley.setFrame('smile-raised');
+            }
+        }
+
+        create ()
+        {
+            this.input.mouse.disableContextMenu();
+
+            this.smiley = this.add.image(this.gridTopLeftX + (this.numCols * 16)/2 - 12, this.gridTopLeftY - 37, 'atlas', 'smile-raised').setOrigin(0);
+            this.smiley.setInteractive();
+            this.smiley.on('pointerdown', (pointer) => {this.smileyPointerDown(pointer)});
+            this.smiley.on('pointerout', (pointer) => {this.smileyPointerOut(pointer)});
+            this.smiley.on('pointerup', (pointer) => {this.smileyPointerUp(pointer)});
+
+            this.mineSign = this.add.image(this.gridTopLeftX, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+            this.mineTens = this.add.image(this.gridTopLeftX + 13, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+            this.mineOnes = this.add.image(this.gridTopLeftX + 13*2, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+            this.updateFlagDisplay(this.numFlags);
+
+            this.timerHundreds = this.add.image(this.gridTopLeftX + (this.numCols * 16) - 13*3, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+            this.timerTens = this.add.image(this.gridTopLeftX + (this.numCols * 16) - 13*2, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+            this.timerOnes = this.add.image(this.gridTopLeftX + (this.numCols * 16) - 13, this.gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
+
+            this.timerEvent = this.time.addEvent({delay: 1000, callback: () => {this.timerTick()}, repeat: 1000}); // TODO: start paused and unpause on first click
+            game.events.on('blur', () => { this.timerEvent.paused = true; });
+            game.events.on('focus', () => { this.timerEvent.paused = false; });
+
+            // TODO: move this to when the first cell is revealed
+            // to ensure that that cell is not a mine
+            this.cellValues = new Array(this.numRows * this.numCols);
+            this.cellValues.fill(false);
+            this.cellValues.fill(true, 0, this.numMines);
+            Phaser.Utils.Array.Shuffle(this.cellValues);
+
+            this.cells = new Array(this.numRows * this.numCols);
+            for(var r = 0; r < this.numRows; ++r)
+            {
+                for(var c = 0; c < this.numCols; ++c)
+                {
+                    const pxx = c * 16 + this.gridTopLeftX;
+                    const pxy = r * 16 + this.gridTopLeftY;
+                    const cell = this.add.image(pxx, pxy, 'atlas', 'cell-raised').setOrigin(0);
+
+                    cell.setData('row', r);
+                    cell.setData('col', c);
+                    cell.setData('isMine', this.cellValues[r * this.numRows + c]);
+                    cell.setData('isFlagged', false);
+                    cell.setData('isRevealed', false);
+                    cell.setData('isDepressed', false);
+
+                    cell.setInteractive();
+                    cell.on('pointerdown', (pointer) => {this.cellPointerDown(pointer, cell)});
+                    cell.on('pointerout', (pointer) => {this.cellPointerOut(pointer, cell)});
+                    cell.on('pointerup', (pointer) => {this.cellPointerUp(pointer, cell)});
+                    cell.on('pointerover', (pointer) => {this.cellPointerOver(pointer, cell)});
+
+                    this.cells[r * this.numRows + c] = cell;
+                }
+            }
+
+            this.mapOverCells((cell) => {
+                const neighbors = this.getNeighbors(cell);
+                const numNeighbors = neighbors.filter(function(neighbor) {
+                    return neighbor.getData('isMine');
+                }).length;
+                cell.setData('numNeighbors', numNeighbors);
+            });
+        }
+
+        mapOverCells(f)
+        {
+            for(var r = 0; r < this.numRows; ++r)
+            {
+                for(var c = 0; c < this.numCols; ++c)
+                {
+                    var cell = this.cells[r * this.numRows + c];
+                    f(cell);
+                }
+            }
+        }
+    }
+
     var config = {
         type: Phaser.AUTO,
         width: 800,
         height: 600,
         backgroundColor: '#ececec',
-        scene: {
-            preload: preload,
-            create: create
-        }
+        scene: [MyScene]
     };
 
     var game = new Phaser.Game(config);
-    var cells = [];
-    var numRows = 9;
-    var numCols = 9;
-    var numMines = 10;
-    var cellValues = [];
-    var numFlags = 0;
-    var gameLost = false;
-
-    var smiley;
-    var mineSign;
-    var mineTens;
-    var mineOnes;
-    var timerHundreds;
-    var timerTens;
-    var timerOnes;
-    var elapsedSeconds = 0;
-
-    var gridTopLeftX = 4 + (800/2) - (numCols * 16)/2;
-    var gridTopLeftY = 48;
-
-    function preload ()
-    {
-        this.load.setBaseURL('https://raw.githubusercontent.com');
-        this.load.atlas('atlas',
-                        'karstendick/minej/master/assets/minesweeper-atlas.png',
-                        'karstendick/minej/master/assets/minesweeper-atlas.json')
-    }
-
-    function cellPointerDown(pointer)
-    {
-        if (pointer.leftButtonDown() && pointer.rightButtonDown())
-        {
-            var neighbors = getNeighbors(this);
-            neighbors.push(this);
-            for (let cell of neighbors)
-            {
-                depressCell(cell);
-            }
-
-        } else if (pointer.leftButtonDown())
-        {
-            depressCell(this);
-            console.log("pointerdown event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        }
-    }
-
-    function depressCell(cell)
-    {
-        if (cell.getData("isFlagged") || cell.getData("isRevealed"))
-            return;
-        cell.setFrame('cell-empty');
-        cell.setData("isDepressed", true);
-        smiley.setFrame('smile-open-mouth');
-    }
-
-    function getDepressedCells()
-    {
-        var depressedCells = [];
-        mapOverCells(function(cell) {
-            if (cell.getData("isDepressed") && !cell.getData("isRevealed") && !cell.getData("isFlagged"))
-                depressedCells.push(cell);
-        });
-        return depressedCells;
-    }
-
-    function cellPointerOut(pointer)
-    {
-        console.log("pointerout event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        depressedCells = getDepressedCells();
-        for (let cell of depressedCells)
-        {
-            cell.setFrame('cell-raised')
-            cell.setData("isDepressed", false)
-        }
-        if (!gameLost && !isGameWon())
-            smiley.setFrame('smile-raised');
-    }
-
-    function cellPointerOver(pointer)
-    {
-        console.log("pointerover event at (", this.getData('row'), ", ", this.getData('col'), ")");
-        if (pointer.leftButtonDown() && !pointer.rightButtonDown())
-        {
-            depressCell(this);
-        } else if (pointer.leftButtonDown() && pointer.rightButtonDown())
-        {
-            var neighbors = getNeighbors(this);
-            neighbors.push(this);
-            for (let cell of neighbors)
-            {
-                depressCell(cell);
-            }
-        }
-    }
-
-    function isGameWon()
-    {
-        if (gameLost)
-            return false;
-
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var cell = cells[r * numRows + c];
-                if (!cell.getData("isMine") && !cell.getData("isRevealed"))
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    function updateGameWon()
-    {
-        mapOverCells(function(cell){
-            if (cell.getData("isMine"))
-            cell.setFrame('cell-flagged')
-        });
-        smiley.setFrame('smile-sunglasses');
-        updateGameEnd();
-    }
-    function updateGameLost()
-    {
-        smiley.setFrame('smile-dead');
-        updateGameEnd();
-        mapOverCells(function(cell){
-            if (cell.getData("isMine") && !cell.getData("isFlagged") && !cell.getData("isRevealed"))
-                cell.setFrame('cell-bomb');
-            else if (!cell.getData("isMine") && cell.getData("isFlagged"))
-                cell.setFrame('cell-mislabelled-bomb');
-        });
-    }
-    function updateGameEnd()
-    {
-        timerEvent.remove();
-        mapOverCells(function(cell){
-            cell.disableInteractive();
-        });
-    }
-
-    function checkForGameEnd()
-    {
-        if(isGameWon())
-            updateGameWon();
-        else if (gameLost)
-            updateGameLost();
-    }
-
-    function cellPointerUp(pointer)
-    {
-        if ((pointer.leftButtonReleased() && pointer.rightButtonDown())
-            || (pointer.leftButtonDown() && pointer.rightButtonReleased()))
-        {
-            if (this.getData("isFlagged") || !this.getData("isRevealed"))
-                return;
-            // chording
-            var neighbors = getNeighbors(this);
-            var numFlaggedNeighbors = neighbors.filter(function(neighbor) {
-                    return neighbor.getData('isFlagged');
-            }).length;
-            if (this.getData("numNeighbors") !== numFlaggedNeighbors)
-                return;
-
-            revealNeighbors(this);
-
-            checkForGameEnd();
-        } else if (pointer.leftButtonReleased())
-        {
-            if (this.getData("isRevealed") || this.getData("isFlagged"))
-                return;
-
-            console.log("pointerup event at (", this.getData('row'), ", ", this.getData('col'), ")");
-            revealCell(this);
-            if (this.getData('numNeighbors') == 0 && !gameLost)
-            {
-                revealNeighbors(this);
-            }
-            checkForGameEnd();
-        } else if (pointer.rightButtonReleased())
-        {
-            if(this.getData("isRevealed"))
-                return;
-            if(this.getData("isFlagged"))
-            {
-                this.setFrame('cell-raised')
-                this.setData("isFlagged", false)
-                numFlags--;
-            } else
-            {
-                this.setFrame('cell-flagged')
-                this.setData("isFlagged", true)
-                numFlags++;
-            }
-            updateFlagDisplay(numFlags);
-        }
-    }
-
-    function updateFlagDisplay(numFlags)
-    {
-        displayNum = Phaser.Math.Clamp(numMines - numFlags, -99, 99);
-        if (displayNum < 0)
-            mineSign.setFrame('timer-hyphen');
-        else
-            mineSign.setFrame('timer0');
-
-        displayStr = Math.abs(displayNum).toString();
-        if (displayStr.length == 1)
-            displayStr = '0' + displayStr;
-
-        mineTens.setFrame('timer' + displayStr[0]);
-        mineOnes.setFrame('timer' + displayStr[1]);
-    }
-
-    function revealCell(cell)
-    {
-        if (!gameLost)
-            smiley.setFrame('smile-raised');
-        cell.setData("isRevealed", true);
-        if (cell.getData('isMine'))
-        {
-            cell.setFrame('cell-detonated-bomb');
-            gameLost = true;
-            return;
-        }
-        numNeighbors = cell.getData("numNeighbors");
-        if (numNeighbors == 0)
-            cell.setFrame('cell-empty');
-        else
-            cell.setFrame('cell' + cell.getData('numNeighbors'));
-    }
-
-    function revealNeighbors(cell)
-    {
-        revealCell(cell);
-        var neighbors = getNeighbors(cell);
-        neighbors = neighbors.filter(function(neighbor) {
-            return !neighbor.getData("isRevealed") && !neighbor.getData("isFlagged");
-        });
-        for (var i = 0; i < neighbors.length; ++i)
-        {
-            revealCell(neighbors[i]);
-            if ((neighbors[i].getData("numNeighbors") == 0))
-                revealNeighbors(neighbors[i]);
-        }
-    }
-
-    function getCell(row, col)
-    {
-        if ((0 <= row) && (row < numRows) && (0 <= col) && (col < numCols))
-        {
-            return cells[row * numRows + col];
-        }
-        return undefined;
-    }
-
-    function getNeighbors(cell)
-    {
-        var row = cell.getData("row");
-        var col = cell.getData("col");
-        neighbors = [
-            getCell(row-1, col),
-            getCell(row-1, col+1),
-            getCell(row, col+1),
-            getCell(row+1, col+1),
-            getCell(row+1, col),
-            getCell(row+1, col-1),
-            getCell(row, col-1),
-            getCell(row-1, col-1)
-        ];
-        neighbors = neighbors.filter(function(neighbor) {
-            return neighbor !== undefined;
-        });
-        return neighbors;
-    }
-
-    function timerTick()
-    {
-        elapsedSeconds = Phaser.Math.Clamp(elapsedSeconds + 1, 0, 999);
-        displaySeconds = elapsedSeconds.toString();
-        if (displaySeconds.length == 1)
-            displaySeconds = '00' + displaySeconds;
-        else if (displaySeconds.length == 2)
-            displaySeconds = '0' + displaySeconds;
-
-        timerHundreds.setFrame('timer' + displaySeconds[0]);
-        timerTens.setFrame('timer' + displaySeconds[1]);
-        timerOnes.setFrame('timer' + displaySeconds[2]);
-    }
-
-    function smileyPointerDown(pointer)
-    {
-        smiley.setFrame('smile-depressed');
-        smiley.setData("isDepressed", true);
-    }
-    function smileyPointerOut(pointer)
-    {
-        if (smiley.getData("isDepressed"))
-        {
-            smiley.setData("isDepressed", false);
-            smiley.setFrame('smile-raised');
-        }
-    }
-    function smileyPointerUp(pointer)
-    {
-        if (pointer.leftButtonReleased())
-        {
-            // TODO: reset the game: reset cells, mine display, timer event and display
-            smiley.setData("isDepressed", false);
-            smiley.setFrame('smile-raised');
-        }
-    }
-
-    function create ()
-    {
-        this.input.mouse.disableContextMenu();
-
-        smiley = this.add.image(gridTopLeftX + (numCols * 16)/2 - 12, gridTopLeftY - 37, 'atlas', 'smile-raised').setOrigin(0);
-        smiley.setInteractive();
-        smiley.on('pointerdown', smileyPointerDown);
-        smiley.on('pointerout', smileyPointerOut);
-        smiley.on('pointerup', smileyPointerUp);
-
-        mineSign = this.add.image(gridTopLeftX, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-        mineTens = this.add.image(gridTopLeftX + 13, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-        mineOnes = this.add.image(gridTopLeftX + 13*2, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-        updateFlagDisplay(numFlags);
-
-        timerHundreds = this.add.image(gridTopLeftX + (numCols * 16) - 13*3, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-        timerTens = this.add.image(gridTopLeftX + (numCols * 16) - 13*2, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-        timerOnes = this.add.image(gridTopLeftX + (numCols * 16) - 13, gridTopLeftY - 36, 'atlas', 'timer0').setOrigin(0);
-
-        timerEvent = this.time.addEvent({delay: 1000, callback: timerTick, repeat: 1000}); // TODO: start paused and unpause on first click
-        game.events.on('blur', function() { timerEvent.paused = true; });
-        game.events.on('focus', function() { timerEvent.paused = false; });
-
-        // TODO: move this to when the first cell is revealed
-        // to ensure that that cell is not a mine
-        cellValues = new Array(numRows * numCols);
-        cellValues.fill(false);
-        cellValues.fill(true, 0, numMines);
-        Phaser.Utils.Array.Shuffle(cellValues);
-
-        cells = new Array(numRows * numCols);
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var pxx = c * 16 + gridTopLeftX;
-                var pxy = r * 16 + gridTopLeftY;
-                var cell = this.add.image(pxx, pxy, 'atlas', 'cell-raised').setOrigin(0);
-
-                cell.setData('row', r);
-                cell.setData('col', c);
-                cell.setData('isMine', cellValues[r * numRows + c]);
-                cell.setData('isFlagged', false);
-                cell.setData('isRevealed', false);
-                cell.setData('isDepressed', false);
-
-                cell.setInteractive();
-                cell.on('pointerdown', cellPointerDown);
-                cell.on('pointerout', cellPointerOut);
-                cell.on('pointerup', cellPointerUp);
-                cell.on('pointerover', cellPointerOver);
-
-                cells[r * numRows + c] = cell;
-            }
-        }
-
-        mapOverCells(function(cell) {
-            neighbors = getNeighbors(cell);
-            numNeighbors = neighbors.filter(function(neighbor) {
-                return neighbor.getData('isMine');
-            }).length;
-            cell.setData('numNeighbors', numNeighbors);
-        });
-    }
-
-    function mapOverCells(f)
-    {
-        for(var r = 0; r < numRows; ++r)
-        {
-            for(var c = 0; c < numCols; ++c)
-            {
-                var cell = cells[r * numRows + c];
-                f(cell);
-            }
-        }
-    }
-
     </script>
 
 </body>
