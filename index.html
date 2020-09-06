@@ -132,6 +132,10 @@
 
     function updateGameWon()
     {
+        mapOverCells(function(cell){
+            if (cell.getData("isMine"))
+            cell.setFrame('cell-flagged')
+        });
         smiley.setFrame('smile-sunglasses');
         updateGameEnd();
     }
