@@ -321,15 +321,20 @@
         {
             if (pointer.leftButtonReleased())
             {
-                // TODO: reset the game: reset this.cells, mine display, timer event and display
-                this.smiley.setData("isDepressed", false);
-                this.smiley.setFrame('smile-raised');
+                this.timerEvent.destroy();
+                for(const child of this.children.list)
+                {
+                    child.destroy();
+                }
+                this.create();
             }
         }
 
         create ()
         {
             this.input.mouse.disableContextMenu();
+            this.elapsedSeconds = 0;
+            this.gameLost = false;
 
             this.smiley = this.add.image(this.gridTopLeftX + (this.numCols * 16)/2 - 12, this.gridTopLeftY - 37, 'atlas', 'smile-raised').setOrigin(0);
             this.smiley.setInteractive();
