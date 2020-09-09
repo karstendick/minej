@@ -9,11 +9,22 @@
     'use strict';
 
     class MyScene extends Phaser.Scene {
-        smiley
-        timerEvent
+        smiley;
+        timerEvent;
+        mineSign;
+        mineTens;
+        mineOnes;
+        timerHundreds;
+        timerTens;
+        timerOnes;
+
         constructor() {
             super({ key: 'MyScene' });
 
+            this.init();
+        }
+
+        init() {
             this.cells = [];
             this.numRows = 9;
             this.numCols = 9;
@@ -22,13 +33,6 @@
             this.numFlags = 0;
             this.gameLost = false;
 
-            // this.smiley;
-            this.mineSign;
-            this.mineTens;
-            this.mineOnes;
-            this.timerHundreds;
-            this.timerTens;
-            this.timerOnes;
             this.elapsedSeconds = 0;
 
             this.gridTopLeftX = 4 + (800/2) - (this.numCols * 16)/2;
@@ -332,9 +336,8 @@
 
         create ()
         {
+            this.init();
             this.input.mouse.disableContextMenu();
-            this.elapsedSeconds = 0;
-            this.gameLost = false;
 
             this.smiley = this.add.image(this.gridTopLeftX + (this.numCols * 16)/2 - 12, this.gridTopLeftY - 37, 'atlas', 'smile-raised').setOrigin(0);
             this.smiley.setInteractive();
